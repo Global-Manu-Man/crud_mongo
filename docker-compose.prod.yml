@@ -1,0 +1,39 @@
+version: '3.8'
+
+# Maintainer: sandoval.morales.emmanuel@gmail.com
+# Application: Express MongoDB CRUD - Production Environment
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: express-mongodb-api-prod
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env.production
+    volumes:
+      - /app/node_modules
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - app-network-prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: npm start
+
+networks:
+  app-network-prod:
+    driver: bridge
