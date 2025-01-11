@@ -12,13 +12,8 @@ services:
     container_name: express-mongodb-api-prod
     ports:
       - "3001:3001"
-    environment:
-      - MONGODB_URI=mongodb://MongoBD_magnettax:006ceb36e25f246f3638520c23670036eb899e96@e10gq.h.filess.io:27018/MongoBD_magnettax
-      - PORT=3001
-      - NODE_ENV=production
-      - API_VERSION=v1
-      - RATE_LIMIT_WINDOW_MS=900000
-      - RATE_LIMIT_MAX=100
+    env_file:
+      - .env.production
     volumes:
       - /app/node_modules
     restart: always
