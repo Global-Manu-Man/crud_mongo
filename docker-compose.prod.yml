@@ -1,0 +1,44 @@
+version: '3.8'
+
+# Maintainer: sandoval.morales.emmanuel@gmail.com
+# Application: Express MongoDB CRUD - Production Environment
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: express-mongodb-api-prod
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGODB_URI=mongodb://MongoBD_magnettax:006ceb36e25f246f3638520c23670036eb899e96@e10gq.h.filess.io:27018/MongoBD_magnettax
+      - PORT=3001
+      - NODE_ENV=production
+      - API_VERSION=v1
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX=100
+    volumes:
+      - /app/node_modules
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - app-network-prod
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: npm start
+
+networks:
+  app-network-prod:
+    driver: bridge

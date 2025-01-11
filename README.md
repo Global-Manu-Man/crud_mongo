@@ -36,12 +36,93 @@ A RESTful API implementing CRUD operations with Express.js and MongoDB, followin
 
 ```env
 NODE_ENV=development         # Environment (development/production)
-PORT=3000                   # Server port
+PORT=3001                   # Server port
 MONGODB_URI=mongodb://...   # MongoDB connection string
 API_VERSION=v1             # API version
 RATE_LIMIT_WINDOW_MS=900000 # Rate limiting window (15 minutes)
 RATE_LIMIT_MAX=100         # Maximum requests per window
 ```
+
+## Docker Setup
+
+### Prerequisites
+- Docker installed on your system
+- Docker Compose installed on your system
+
+### Development Environment
+
+1. Build and start the development environment:
+```bash
+docker-compose -f docker-compose.dev.yml build
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+2. View logs:
+```bash
+docker-compose -f docker-compose.dev.yml logs -f api
+```
+
+3. Stop the development environment:
+```bash
+docker-compose -f docker-compose.dev.yml down
+```
+
+### Production Environment
+
+1. Build and start the production environment:
+```bash
+docker-compose -f docker-compose.prod.yml build
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+2. View logs:
+```bash
+docker-compose -f docker-compose.prod.yml logs -f api
+```
+
+3. Stop the production environment:
+```bash
+docker-compose -f docker-compose.prod.yml down
+```
+
+### Docker Commands Reference
+
+- Check running containers:
+```bash
+docker ps
+```
+
+- Check container logs:
+```bash
+docker logs express-mongodb-api-dev  # For development
+docker logs express-mongodb-api-prod # For production
+```
+
+- Enter container shell:
+```bash
+docker exec -it express-mongodb-api-dev sh  # For development
+docker exec -it express-mongodb-api-prod sh # For production
+```
+
+- Remove all containers and networks:
+```bash
+docker-compose -f docker-compose.dev.yml down --volumes # Development
+docker-compose -f docker-compose.prod.yml down --volumes # Production
+```
+
+## Traditional Installation (Without Docker)
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables (copy .env.example to .env)
+4. Start the server:
+   ```bash
+   npm run dev    # Development
+   npm start      # Production
+   ```
 
 ## Best Practices
 
@@ -96,20 +177,6 @@ Content-Type: application/json
   "age": 31
 }
 ```
-
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up environment variables (copy .env.example to .env)
-4. Start the server:
-   ```bash
-   npm run dev    # Development
-   npm start      # Production
-   ```
 
 ## Development
 

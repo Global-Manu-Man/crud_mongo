@@ -12,42 +12,46 @@ RUN groupadd -r node || true && \
 # Copiamos los archivos de dependencias
 COPY package*.json ./
 
-# Instalamos dependencias
-RUN npm ci --only=production
+# Instalamos dependencias, incluyendo las de desarrollo para nodemon
+RUN npm ci
 
 # Copiamos el código fuente
 COPY . .
 
-# Si hay un paso de build, lo ejecutamos y configuramos permisos
-RUN npm run build --if-present && \
-    # Aseguramos los permisos correctos
-    chown -R 1001:1001 /app
+# Aseguramos los permisos correctos
+RUN chown -R 1001:1001 /app
 
 # Etapa de producción
 FROM bitnami/node:22.13.0-debian-12-r2 AS production
 
 # Añadimos etiquetas útiles
-LABEL maintainer="developer@example.com"
+LABEL maintainer="sandoval.morales.emmanuel@gmail.com"
 LABEL version="1.0"
-LABEL description="Aplicación Node.js en producción"
+LABEL description="Express MongoDB CRUD Application"
 
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos los archivos necesarios desde la etapa de builder
+# Instalamos curl para el healthcheck
+USER root
+RUN apt-get update && apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# Copiamos solo los archivos necesarios desde la etapa de builder
 COPY --from=builder --chown=1001:1001 /app/package*.json ./
 COPY --from=builder --chown=1001:1001 /app/node_modules ./node_modules
-COPY --from=builder --chown=1001:1001 /app/. .
+COPY --from=builder --chown=1001:1001 /app/src ./src
 
-# Exponemos el puerto que usará la aplicación
-EXPOSE 3000
+# Exponemos el puerto de la aplicación
+EXPOSE 3001
+
+# Configuramos el healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
 
 # Usamos el usuario no root de Bitnami
 USER 1001
-
-# Variables de entorno comunes en producción
-ENV NODE_ENV=production \
-    PORT=3000
 
 # Comando para ejecutar la aplicación
 CMD ["node", "src/index.js"]
