@@ -1,57 +1,41 @@
-# Etapa de construcción
-FROM bitnami/node:22.13.0-debian-12-r2 AS builder
+# Build stage
+FROM node:22-slim AS builder
 
-# Configurar usuario root para la instalación
-USER root
 WORKDIR /app
 
-# Creamos el usuario y grupo node si no existe
-RUN groupadd -r node || true && \
-    useradd -r -g node node || true
-
-# Copiamos los archivos de dependencias
+# Copy package files
 COPY package*.json ./
 
-# Instalamos dependencias, incluyendo las de desarrollo para nodemon
+# Install dependencies with specific npm configuration
+ENV NPM_CONFIG_CACHE=/app/.npm
 RUN npm ci
 
-# Copiamos el código fuente
+# Copy source code
 COPY . .
 
-# Aseguramos los permisos correctos
-RUN chown -R 1001:1001 /app
+# Production stage
+FROM node:22-slim AS production
 
-# Etapa de producción
-FROM bitnami/node:22.13.0-debian-12-r2 AS production
-
-# Añadimos etiquetas útiles
-LABEL maintainer="sandoval.morales.emmanuel@gmail.com"
-LABEL version="1.0"
-LABEL description="Express MongoDB CRUD Application"
-
-# Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Instalamos curl para el healthcheck
-USER root
+# Install curl for healthcheck
 RUN apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-# Copiamos solo los archivos necesarios desde la etapa de builder
-COPY --from=builder --chown=1001:1001 /app/package*.json ./
-COPY --from=builder --chown=1001:1001 /app/node_modules ./node_modules
-COPY --from=builder --chown=1001:1001 /app/src ./src
+# Create non-root user
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs && \
+    chown -R nodejs:nodejs /app
 
-# Exponemos el puerto de la aplicación
-EXPOSE 3001
+# Copy files from builder
+COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/src ./src
 
-# Configuramos el healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3001/health || exit 1
+# Switch to non-root user
+USER nodejs
 
-# Usamos el usuario no root de Bitnami
-USER 1001
+# Set environment variable
+ENV NODE_ENV=production
 
-# Comando para ejecutar la aplicación
-CMD ["node", "src/index.js"]
+CMD ["npm", "start"]
